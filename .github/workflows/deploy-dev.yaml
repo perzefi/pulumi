@@ -1,8 +1,6 @@
 name: Build and deploy
-workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
+on:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -15,7 +13,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
 
       - name: Install Pulumi
         uses: pulumi/actions@v5
@@ -33,35 +30,9 @@ jobs:
 
       - name: NPM install
         env:
-           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd ./dev
           npm install
-
-      - name: Deploy foundation
-        uses: pulumi/actions@v3
-        id: deploy-foundation
-        with:
-          command: up
-          refresh: 'true'
-          stack-name: 'foundation-dev'
-          cloud-url: 'gs://oneplatform-pulumi-state-dev'
-          work-dir: 'dev/foundation'
-        env:
-          USE_GKE_GCLOUD_AUTH_PLUGIN: True
-
-      - name: Deploy Clients
-        uses: pulumi/actions@v3
-        id: deploy-clients
-        with:
-          command: up
-          refresh: 'true'
-          stack-name: 'clients-dev'
-          cloud-url: 'gs://oneplatform-pulumi-state-dev'
-          work-dir: 'dev/clients'
-        env:
-          USE_GKE_GCLOUD_AUTH_PLUGIN: True
-
       - name: Deploy Platform
         uses: pulumi/actions@v3
         id: deploy-platform
@@ -69,7 +40,7 @@ jobs:
           command: up
           refresh: 'true'
           stack-name: 'platform-dev'
-          cloud-url: 'gs://oneplatform-pulumi-state-dev'
-          work-dir: 'dev/platform'
+          work-dir: 'platform'
         env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
