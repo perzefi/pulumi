@@ -40,7 +40,9 @@ jobs:
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
 
       - name: Pulumi Preview
-        run: pulumi preview --stack clients-dev --work-dir client --json > preview.json
+        run: |
+          cd client
+          pulumi up --stack clients-dev --yes --refresh
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: true
@@ -60,6 +62,10 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
     if: ${{ github.event.inputs.confirm == 'true' }}
     steps:
       - name: Checkout Code
