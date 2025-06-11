@@ -1,12 +1,6 @@
-name: Pulumi Deploy (With Manual Confirmation)
-
+name: Pulumi With Env
 on:
   workflow_dispatch:
-    inputs:
-      confirm:
-        description: 'Confirm and proceed with Pulumi deploy'
-        required: false
-        default: 'false'
 
 jobs:
   preview:
@@ -15,15 +9,11 @@ jobs:
       contents: read
       id-token: write
       packages: write
-    if: ${{ github.event.inputs.confirm != 'true' }}
-    outputs:
-      has_changes: ${{ steps.check.outputs.has_changes }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+    environment: dev
 
-      - name: Install Node.js Packages
-        run: npm install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Install Pulumi
         uses: pulumi/actions@v5
@@ -34,45 +24,41 @@ jobs:
           install_components: 'gke-gcloud-auth-plugin'
 
       - name: gcloud authentication
-        uses: 'google-github-actions/auth@v2'
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
 
+      - name: NPM install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm install
+
       - name: Pulumi Preview
-        run: |
-          cd client
-          pulumi up --stack clients-dev --yes --refresh
+        uses: pulumi/actions@v5
+        with:
+          command: preview
+          refresh: 'true'
+          stack-name: clients-dev
+          work-dir: client
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          USE_GKE_GCLOUD_AUTH_PLUGIN: true
-
-      - name: Check for Changes
-        id: check
-        run: |
-          CHANGES=$(jq '.changeSummary.create + .changeSummary.update + .changeSummary.delete' preview.json)
-          echo "Detected $CHANGES change(s)."
-          if [ "$CHANGES" -gt 0 ]; then
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-            echo "❗ Changes detected. To deploy, re-run the workflow with 'confirm: true'"
-          else
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            echo "✅ No changes detected. Nothing to deploy."
-          fi
+          USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
   deploy:
     runs-on: ubuntu-latest
+    needs: preview
     permissions:
       contents: read
       id-token: write
       packages: write
-    if: ${{ github.event.inputs.confirm == 'true' }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+    environment:
+      name: production  # This will require manual approval
+      url: ${{ steps.deploy.outputs.url }}
 
-      - name: Install Node.js Packages
-        run: npm install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Install Pulumi
         uses: pulumi/actions@v5
@@ -82,19 +68,25 @@ jobs:
         with:
           install_components: 'gke-gcloud-auth-plugin'
 
-      - name: Authenticate to GCP
+      - name: gcloud authentication
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
 
+      - name: NPM install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm install
+
       - name: Pulumi Up
-        uses: pulumi/actions@v3
+        id: deploy
+        uses: pulumi/actions@v5
         with:
           command: up
+          refresh: 'true'
           stack-name: clients-dev
-          refresh: true
           work-dir: client
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          USE_GKE_GCLOUD_AUTH_PLUGIN: true
+          USE_GKE_GCLOUD_AUTH_PLUGIN: True
