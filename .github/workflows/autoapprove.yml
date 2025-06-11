@@ -11,9 +11,7 @@ jobs:
       id-token: write
       packages: write
     environment: dev
-    outputs:
-      has-changes: ${{ steps.check-changes.outputs.has-changes }}
-      preview-message: ${{ steps.preview.outputs.stdout }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,106 +35,14 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm install
 
-      - name: Pulumi Preview
-        id: preview
-        uses: pulumi/actions@v5
-        with:
-          command: preview
-          stack-name: clients-dev
-          work-dir: client
-          comment-on-pr: false
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          USE_GKE_GCLOUD_AUTH_PLUGIN: True
-
-      - name: Check for changes
-        id: check-changes
-        run: |
-          preview_output="${{ steps.preview.outputs.stdout }}"
-          if echo "$preview_output" | grep -E "(create|update|delete|replace)" | grep -v "no changes"; then
-            echo "has-changes=true" >> $GITHUB_OUTPUT
-            echo "Changes detected in preview"
-          else
-            echo "has-changes=false" >> $GITHUB_OUTPUT
-            echo "No changes detected in preview"
-          fi
-
-      - name: Create Preview Summary
-        run: |
-          echo "## Pulumi Preview Results" >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.preview.outputs.stdout }}" >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ steps.check-changes.outputs.has-changes }}" == "true" ]; then
-            echo "⚠️ Changes detected - Requires manual approval" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ No changes detected - Infrastructure is up to date" >> $GITHUB_STEP_SUMMARY
-          fi
-
-  approve:
-    needs: preview
-    runs-on: ubuntu-latest
-    environment: dev
-    if: needs.preview.outputs.has-changes == 'true'
-    steps:
-      - name: Show Preview and Wait for Approval
-        run: |
-          echo "## 🔍 Preview of Changes"
-          echo "${{ needs.preview.outputs.preview-message }}"
-          echo "⚠️ Please review the changes and approve the deployment"
-
-  deploy:
-    needs: [preview, approve]
-    if: |
-      always() &&
-      (needs.preview.outputs.has-changes == 'false' ||
-       (needs.preview.outputs.has-changes == 'true' && needs.approve.result == 'success'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-      packages: write
-    environment: dev
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Pulumi
-        uses: pulumi/actions@v5
-
-      - name: Install gcloud
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          install_components: 'gke-gcloud-auth-plugin'
-
-      - name: gcloud authentication
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
-          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
-
-      - name: NPM install
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm install
 
       - name: Pulumi Up
-        if: needs.preview.outputs.has-changes == 'true'
         uses: pulumi/actions@v5
         with:
           command: up
+          refresh: 'true'
           stack-name: clients-dev
           work-dir: client
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
-
-      - name: Deployment Summary
-        run: |
-          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ needs.preview.outputs.has-changes }}" == "true" ]; then
-            echo "✅ Deployment completed successfully" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "ℹ️ No deployment needed - infrastructure is up to date" >> $GITHUB_STEP_SUMMARY
-          fi
