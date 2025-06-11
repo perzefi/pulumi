@@ -1,0 +1,149 @@
+name: Build and deploy
+on:
+  workflow_dispatch:
+
+jobs:
+  refresh-and-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    environment: dev
+    outputs:
+      has-changes: ${{ steps.check-changes.outputs.has-changes }}
+      preview-summary: ${{ steps.preview.outputs.summary }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Pulumi
+        uses: pulumi/actions@v5
+
+      - name: Install gcloud
+        uses: 'google-github-actions/setup-gcloud@v1'
+        with:
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: gcloud authentication
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
+
+      - name: NPM install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm install
+
+      - name: Pulumi Refresh
+        uses: pulumi/actions@v5
+        with:
+          command: refresh
+          stack-name: 'clients-dev'
+          work-dir: 'client'
+          comment-on-pr: false
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          USE_GKE_GCLOUD_AUTH_PLUGIN: True
+
+      - name: Pulumi Preview
+        uses: pulumi/actions@v5
+        id: preview
+        with:
+          command: preview
+          stack-name: 'clients-dev'
+          work-dir: 'client'
+          comment-on-pr: false
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          USE_GKE_GCLOUD_AUTH_PLUGIN: True
+
+      - name: Check for changes
+        id: check-changes
+        run: |
+          # Check if preview output contains changes
+          if echo "${{ steps.preview.outputs.summary }}" | grep -q "no changes"; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in preview"
+          else
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in preview"
+          fi
+
+      - name: Display Preview Summary
+        if: steps.check-changes.outputs.has-changes == 'true'
+        run: |
+          echo "## Pulumi Preview Summary" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.preview.outputs.summary }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Manual approval required before deployment**" >> $GITHUB_STEP_SUMMARY
+
+  approval:
+    needs: refresh-and-preview
+    if: needs.refresh-and-preview.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: production-approval
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Manual Approval Required
+        run: |
+          echo "Changes detected. Manual approval required."
+          echo "Preview summary: ${{ needs.refresh-and-preview.outputs.preview-summary }}"
+
+  deploy:
+    needs: [refresh-and-preview, approval]
+    if: |
+      always() && 
+      needs.refresh-and-preview.result == 'success' && 
+      (needs.refresh-and-preview.outputs.has-changes == 'false' || needs.approval.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    environment: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Pulumi
+        uses: pulumi/actions@v5
+
+      - name: Install gcloud
+        uses: 'google-github-actions/setup-gcloud@v1'
+        with:
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: gcloud authentication
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
+
+      - name: NPM install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm install
+
+      - name: Deploy Platform
+        if: needs.refresh-and-preview.outputs.has-changes == 'true'
+        uses: pulumi/actions@v5
+        id: deploy-platform
+        with:
+          command: up
+          stack-name: 'clients-dev'
+          work-dir: 'client'
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          USE_GKE_GCLOUD_AUTH_PLUGIN: True
+
+      - name: No changes to deploy
+        if: needs.refresh-and-preview.outputs.has-changes == 'false'
+        run: |
+          echo "No changes detected. Skipping deployment."
+          echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "✅ No changes required - infrastructure is up to date" >> $GITHUB_STEP_SUMMARY
