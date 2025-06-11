@@ -9,7 +9,6 @@ jobs:
       contents: read
       id-token: write
       packages: write
-    environment: dev
     outputs:
       has_changes: ${{ steps.preview.outputs.has_changes }}
 
@@ -70,7 +69,7 @@ jobs:
       id-token: write
       packages: write
     environment:
-      name: production
+      name: dev
       url: ${{ steps.deploy.outputs.url }}
 
     steps:
