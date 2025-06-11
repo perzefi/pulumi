@@ -10,7 +10,7 @@ jobs:
       id-token: write
       packages: write
     outputs:
-      has_changes: ${{ steps.preview.outputs.has_changes }}
+      has_changes: ${{ steps.check_changes.outputs.has_changes }}
 
     steps:
       - name: Checkout
