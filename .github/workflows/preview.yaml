@@ -11,6 +11,10 @@ on:
 jobs:
   preview:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
     if: ${{ github.event.inputs.confirm != 'true' }}
     outputs:
       has_changes: ${{ steps.check.outputs.has_changes }}
