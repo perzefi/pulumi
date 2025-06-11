@@ -1,4 +1,4 @@
-name: Autoprove
+name: Deploy to Dev
 on:
   workflow_dispatch:
 
@@ -12,7 +12,7 @@ jobs:
     environment: dev
     outputs:
       has-changes: ${{ steps.check-changes.outputs.has-changes }}
-      preview-summary: ${{ steps.preview.outputs.summary }}
+      preview-output: ${{ steps.preview.outputs.stdout }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,42 +63,57 @@ jobs:
       - name: Check for changes
         id: check-changes
         run: |
-          # Check if preview output contains changes
-          if echo "${{ steps.preview.outputs.summary }}" | grep -q "no changes"; then
-            echo "has-changes=false" >> $GITHUB_OUTPUT
-            echo "No changes detected in preview"
-          else
+          preview_output="${{ steps.preview.outputs.stdout }}"
+          echo "Preview output:"
+          echo "$preview_output"
+          
+          # More robust change detection
+          if echo "$preview_output" | grep -E "(create|update|delete|replace)" | grep -v "no changes"; then
             echo "has-changes=true" >> $GITHUB_OUTPUT
-            echo "Changes detected in preview"
+            echo "✅ Changes detected in preview"
+          else
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            echo "✅ No changes detected in preview"
           fi
 
       - name: Display Preview Summary
-        if: steps.check-changes.outputs.has-changes == 'true'
         run: |
-          echo "## Pulumi Preview Summary" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.preview.outputs.summary }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "⚠️ **Manual approval required before deployment**" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔍 Pulumi Preview Results" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.preview.outputs.stdout }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.check-changes.outputs.has-changes }}" == "true" ]; then
+            echo "⚠️ **Changes detected - Manual approval required for deployment**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **No changes detected - Infrastructure is up to date**" >> $GITHUB_STEP_SUMMARY
+          fi
 
-  approval:
+  wait-for-approval:
     needs: refresh-and-preview
     if: needs.refresh-and-preview.outputs.has-changes == 'true'
     runs-on: ubuntu-latest
-    environment:
-      name: production-approval
-      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    environment: dev
     steps:
-      - name: Manual Approval Required
+      - name: Request Manual Approval
         run: |
-          echo "Changes detected. Manual approval required."
-          echo "Preview summary: ${{ needs.refresh-and-preview.outputs.preview-summary }}"
+          echo "🚨 Manual approval required!"
+          echo "Changes have been detected in the Pulumi preview."
+          echo "Please review the changes above and approve this deployment."
+          echo ""
+          echo "Preview output:"
+          echo "${{ needs.refresh-and-preview.outputs.preview-output }}"
 
   deploy:
-    needs: [refresh-and-preview, approval]
+    needs: [refresh-and-preview, wait-for-approval]
+    # Only run if no changes OR if changes exist and approval was given
     if: |
       always() && 
       needs.refresh-and-preview.result == 'success' && 
-      (needs.refresh-and-preview.outputs.has-changes == 'false' || needs.approval.result == 'success')
+      (
+        needs.refresh-and-preview.outputs.has-changes == 'false' || 
+        (needs.refresh-and-preview.outputs.has-changes == 'true' && needs.wait-for-approval.result == 'success')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -129,10 +144,9 @@ jobs:
         run: |
           npm install
 
-      - name: Deploy Platform
+      - name: Deploy Platform (if changes detected)
         if: needs.refresh-and-preview.outputs.has-changes == 'true'
         uses: pulumi/actions@v5
-        id: deploy-platform
         with:
           command: up
           stack-name: 'clients-dev'
@@ -141,9 +155,13 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
-      - name: No changes to deploy
-        if: needs.refresh-and-preview.outputs.has-changes == 'false'
+      - name: Deployment Summary
         run: |
-          echo "No changes detected. Skipping deployment."
-          echo "## Deployment Status" >> $GITHUB_STEP_SUMMARY
-          echo "✅ No changes required - infrastructure is up to date" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.refresh-and-preview.outputs.has-changes }}" == "true" ]; then
+            echo "✅ **Deployment completed successfully**" >> $GITHUB_STEP_SUMMARY
+            echo "Changes have been applied to the dev environment." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **No deployment needed**" >> $GITHUB_STEP_SUMMARY
+            echo "Infrastructure was already up to date." >> $GITHUB_STEP_SUMMARY
+          fi
