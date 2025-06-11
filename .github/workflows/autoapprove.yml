@@ -1,6 +1,10 @@
 name: Manual Approval
 on:
   workflow_dispatch:
+#The key changes are:
+#  1. Added `outputs` section to the preview job to expose the has_changes value
+#  2. Added a `Check Preview Output` step that properly sets the has_changes output
+#  3. Ensured the deploy job properly references the output with `needs.preview.outputs.has_changes`
 
 jobs:
   preview:
