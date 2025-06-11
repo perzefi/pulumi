@@ -6,12 +6,12 @@ import {clusterName, environment, region} from "./infrastructure/config";
 import { Provider } from "@pulumi/kubernetes";
 
 
-// Create Network
-const network = new Network("network", {
-    clusterName,
-    region,
-    environment,
-});
+// // Create Network
+// const network = new Network("network", {
+//     clusterName,
+//     region,
+//     environment,
+// });
 //
 // // Create GKE Cluster
 // const gke = new GkeCluster("gke", {
