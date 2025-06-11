@@ -1,0 +1,75 @@
+name: Build and deplo:
+  workflow_dispatch:  
+  # push:
+  #   branches:
+  #     - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    environment: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Install Pulumi
+        uses: pulumi/actions@v5
+
+      - name: Install gcloud
+        uses: 'google-github-actions/setup-gcloud@v1'
+        with:
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: gcloud authentication
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
+
+      - name: NPM install
+        env:
+           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd ./dev
+          npm install
+
+      - name: Deploy foundation
+        uses: pulumi/actions@v3
+        id: deploy-foundation
+        with:
+          command: up
+          refresh: 'true'
+          stack-name: 'foundation-dev'
+          cloud-url: 'gs://oneplatform-pulumi-state-dev'
+          work-dir: 'dev/foundation'
+        env:
+          USE_GKE_GCLOUD_AUTH_PLUGIN: True
+
+      - name: Deploy Clients
+        uses: pulumi/actions@v3
+        id: deploy-clients
+        with:
+          command: up
+          refresh: 'true'
+          stack-name: 'clients-dev'
+          cloud-url: 'gs://oneplatform-pulumi-state-dev'
+          work-dir: 'dev/clients'
+        env:
+          USE_GKE_GCLOUD_AUTH_PLUGIN: True
+
+      - name: Deploy Platform
+        uses: pulumi/actions@v3
+        id: deploy-platform
+        with:
+          command: up
+          refresh: 'true'
+          stack-name: 'platform-dev'
+          cloud-url: 'gs://oneplatform-pulumi-state-dev'
+          work-dir: 'dev/platform'
+        env:
+          USE_GKE_GCLOUD_AUTH_PLUGIN: True
