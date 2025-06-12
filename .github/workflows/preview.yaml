@@ -85,7 +85,7 @@ jobs:
           command: up
           refresh: 'true'
           stack-name: foundation-dev
-          work-dir: foundation-dev
+          work-dir: foundation
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
