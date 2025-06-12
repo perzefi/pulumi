@@ -111,9 +111,12 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
+
+
   # Stage FOUNDATION refresh and preview
   foundation-refresh-preview:
     runs-on: ubuntu-latest
+    needs: client-deploy
     permissions:
       contents: read
       id-token: write
@@ -150,8 +153,8 @@ jobs:
         with:
           command: preview
           refresh: 'true'
-          stack-name: clients-dev
-          work-dir: client
+          stack-name: foundation-dev
+          work-dir: foundation
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
@@ -168,6 +171,9 @@ jobs:
 
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+
+
   # Stage FOUNDATION deploy if it is approved, if no changes skip.
   foundation-deploy:
     runs-on: ubuntu-latest
