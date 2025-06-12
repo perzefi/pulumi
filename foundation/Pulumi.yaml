@@ -1,4 +1,4 @@
-name: gcpp
+name: foundation
 description: A minimal Google Cloud TypeScript Pulumi program
 runtime:
   name: nodejs

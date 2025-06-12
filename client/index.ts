@@ -7,7 +7,7 @@ import { Provider } from "@pulumi/kubernetes";
 
 
 // // Create Network
-const network = new Network("network1", {
+const network = new Network("cloud", {
     clusterName,
     region,
     environment,
