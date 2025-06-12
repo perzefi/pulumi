@@ -9,7 +9,6 @@ jobs:
       contents: read
       id-token: write
       packages: write
-    environment: dev
 
     steps:
       - name: Checkout
