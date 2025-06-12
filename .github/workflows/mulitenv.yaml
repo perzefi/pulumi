@@ -54,7 +54,7 @@ jobs:
       - name: Check Preview Output
         id: check_changes
         run: |
-          PREVIEW_OUTPUT="${{ steps.preview.outputs.stdout }}"
+          PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
           if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
@@ -163,7 +163,7 @@ jobs:
       - name: Check Preview Output
         id: check_changes
         run: |
-          PREVIEW_OUTPUT="${{ steps.preview.outputs.stdout }}"
+          PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
           if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
@@ -275,7 +275,7 @@ jobs:
       - name: Check Preview Output
         id: check_changes
         run: |
-          PREVIEW_OUTPUT="${{ steps.preview.outputs.stdout }}"
+          PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
           if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
