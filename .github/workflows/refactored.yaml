@@ -242,10 +242,14 @@ jobs:
         run: |
           PREVIEW_OUTPUT="${{ steps.preview.outputs.stdout }}"
           echo "$PREVIEW_OUTPUT"
-          if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)"; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+          
+          if echo "$PREVIEW_OUTPUT" | grep -E "(\s*\+ [0-9]+ to create|\s*\- [0-9]+ to delete|\s*~ [0-9]+ to update|\s*[0-9]+ changes)" > /dev/null; then
+          echo "has_changes=true" >> $GITHUB_OUTPUT
           else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+          
+          echo "::notice title=Preview::Detected Preview Output:"
+          echo "$PREVIEW_OUTPUT"
           fi
 
   platform-deploy:
