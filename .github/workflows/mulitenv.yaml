@@ -40,7 +40,7 @@ jobs:
         run: npm install
 
       - name: Pulumi Preview
-        id: client-refresh-preview
+        id: preview
         uses: pulumi/actions@v5
         with:
           command: preview
@@ -54,7 +54,7 @@ jobs:
       - name: Check Preview Output
         id: check_changes
         run: |
-          PREVIEW_OUTPUT="${{ steps.client-refresh-preview.outputs.output }}"
+          PREVIEW_OUTPUT="${{ steps.preview.outputs.stdout }}"
           if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
@@ -149,7 +149,7 @@ jobs:
         run: npm install
 
       - name: Pulumi Preview
-        id: foundation-refresh-preview
+        id: preview
         uses: pulumi/actions@v5
         with:
           command: preview
@@ -163,7 +163,7 @@ jobs:
       - name: Check Preview Output
         id: check_changes
         run: |
-          PREVIEW_OUTPUT="${{ steps.foundation-refresh-preview.outputs.output }}"
+          PREVIEW_OUTPUT="${{ steps.preview.outputs.stdout }}"
           if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
@@ -236,6 +236,7 @@ jobs:
     outputs:
       has_changes: ${{ steps.check_changes.outputs.has_changes }}
 
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -260,7 +261,7 @@ jobs:
         run: npm install
 
       - name: Pulumi Preview
-        id: platform-refresh-preview
+        id: preview
         uses: pulumi/actions@v5
         with:
           command: preview
@@ -274,7 +275,7 @@ jobs:
       - name: Check Preview Output
         id: check_changes
         run: |
-          PREVIEW_OUTPUT="${{ steps.platform-refresh-preview.outputs.output }}"
+          PREVIEW_OUTPUT="${{ steps.preview.outputs.stdout }}"
           if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
