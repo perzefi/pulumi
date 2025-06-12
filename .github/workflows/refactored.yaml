@@ -55,6 +55,8 @@ jobs:
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
+          echo "::notice title=Preview::Detected Preview Output:"
+          echo "$PREVIEW_OUTPUT"
 
   client-deploy:
     needs: client-refresh-preview
@@ -151,6 +153,8 @@ jobs:
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
+          echo "::notice title=Preview::Detected Preview Output:"
+          echo "$PREVIEW_OUTPUT"
 
   foundation-deploy:
     needs: foundation-refresh-preview
@@ -247,10 +251,9 @@ jobs:
           echo "has_changes=true" >> $GITHUB_OUTPUT
           else
           echo "has_changes=false" >> $GITHUB_OUTPUT
-          
+          fi
           echo "::notice title=Preview::Detected Preview Output:"
           echo "$PREVIEW_OUTPUT"
-          fi
 
   platform-deploy:
     needs: platform-refresh-preview
