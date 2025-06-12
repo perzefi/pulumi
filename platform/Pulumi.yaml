@@ -1,11 +1,10 @@
 name: platform
-description: A minimal Google Cloud JavaScript Pulumi program
+description: A minimal Google Cloud TypeScript Pulumi program
 runtime:
   name: nodejs
   options:
-    typescript: false
     packagemanager: npm
 config:
   pulumi:tags:
     value:
-      pulumi:template: gcp-javascript
+      pulumi:template: gcp-typescript
