@@ -1,4 +1,4 @@
-name: Pulumi With Env
+name: Testing Stack
 on:
   workflow_dispatch:
 
@@ -39,8 +39,8 @@ jobs:
         with:
           command: preview
           refresh: 'true'
-          stack-name: clients-dev
-          work-dir: client
+          stack-name: foundation-dev
+          work-dir: foundation
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
@@ -53,7 +53,7 @@ jobs:
       id-token: write
       packages: write
     environment:
-      name: production  # This will require manual approval
+      name: dev  # This will require manual approval
       url: ${{ steps.deploy.outputs.url }}
 
     steps:
@@ -85,8 +85,8 @@ jobs:
         with:
           command: up
           refresh: 'true'
-          stack-name: clients-dev
-          work-dir: client
+          stack-name: foundation-dev
+          work-dir: foundation-dev
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
