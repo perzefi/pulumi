@@ -1,4 +1,4 @@
-name: Manual Approval
+name: Multi Stack Approval
 on:
   workflow_dispatch:
 #The key changes are:
