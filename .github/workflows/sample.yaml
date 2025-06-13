@@ -40,7 +40,7 @@ jobs:
         id: preview-step
         run: |
           echo "🧹 Linting source files..."
-          echo "status=sucess" >> $GITHUB_OUTPUT
+          echo "status=success" >> $GITHUB_OUTPUT
   
 
   foundation-deploy:
