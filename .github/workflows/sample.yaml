@@ -1,0 +1,49 @@
+name: Sample CI/CD Pipeline with Dependencies
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build project
+        run: echo "🔧 Building project..."
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Run tests
+        run: echo "✅ Running unit tests..."
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Lint code
+        run: echo "🧹 Linting source files..."
+
+  security_scan:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Run security scan
+        run: echo "🔐 Running security scan..."
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: security_scan
+    steps:
+      - name: Deploy to staging
+        run: echo "🚀 Deploying to staging environment..."
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Send Slack notification
+        run: echo "📣 Notifying team of successful deployment..."
