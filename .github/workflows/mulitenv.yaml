@@ -5,7 +5,7 @@ on:
 #  1. Added `outputs` section to the preview job to expose the has_changes value
 #  2. Added a `Check Preview Output` step that properly sets the has_changes output
 #  3. Ensured the deploy job properly references the output with `needs.preview.outputs.has_changes`
-# Stage CLIENT refresh and preview
+# Stage CLIENT refresh and previews
 jobs:
   clients-refresh-preview:
     runs-on: ubuntu-latest
