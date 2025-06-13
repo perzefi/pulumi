@@ -232,8 +232,8 @@ jobs:
       contents: read
       id-token: write
       packages: write
-    outputs:
-      has_changes_platform: ${{ steps.check_changes.outputs.has_changes }}
+#    outputs:
+#      has_changes_platform: ${{ steps.check_changes.outputs.has_changes }}
 
     steps:
       - name: Checkout
@@ -270,17 +270,17 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
-      - name: Check Preview Output
-        id: check_changes
-        run: |
-          if [[ "${{ steps.preview.outputs.output }}" =~ (to create|to delete|to update|changes) ]]; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          fi  
-
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+#      - name: Check Preview Output
+#        id: check_changes
+#        run: |
+#          if [[ "${{ steps.preview.outputs.output }}" =~ (to create|to delete|to update|changes) ]]; then
+#            echo "has_changes=true" >> $GITHUB_OUTPUT
+#          else
+#            echo "has_changes=false" >> $GITHUB_OUTPUT
+#          fi
+#
+#        env:
+#          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
 
 
   platform-deploy:

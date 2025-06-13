@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  clients-refresh-preview:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -13,37 +13,37 @@ jobs:
       - name: Build project
         run: echo "🔧 Building project..."
 
-  test:
+  clients-deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: clients-refresh-preview
     steps:
       - name: Run tests
         run: echo "✅ Running unit tests..."
 
-  lint:
+  foundation-refresh-preview:
     runs-on: ubuntu-latest
-    needs: test
+    needs: clients-deploy
     steps:
       - name: Lint code
         run: echo "🧹 Linting source files..."
 
-  security_scan:
+  foundation-deploy:
     runs-on: ubuntu-latest
-    needs: lint
+    needs: foundation-refresh-preview
     steps:
       - name: Run security scan
         run: echo "🔐 Running security scan..."
 
-  deploy:
+  platform-refresh-preview:
     runs-on: ubuntu-latest
-    needs: security_scan
+    needs: foundation-deploy
     steps:
       - name: Deploy to staging
         run: echo "🚀 Deploying to staging environment..."
 
-  notify:
+  platform-deploy:
     runs-on: ubuntu-latest
-    needs: deploy
+    needs: platform-refresh-preview
     steps:
       - name: Send Slack notification
         run: echo "📣 Notifying team of successful deployment..."
