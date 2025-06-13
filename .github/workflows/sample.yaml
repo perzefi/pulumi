@@ -16,7 +16,7 @@ jobs:
       - name: Build project
         id: preview-step
         run: |
-          echo "Client refresh"
+          cho "Client refresh"
           echo "status=success" >> $GITHUB_OUTPUT
   
 
