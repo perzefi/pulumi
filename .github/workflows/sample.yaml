@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: foundation-refresh-preview
     if: |
-      always() &&
+      always() && success() &&
       needs.foundation-refresh-preview.outputs.preview_status == 'success'
     steps:
       - name: Run security scan
