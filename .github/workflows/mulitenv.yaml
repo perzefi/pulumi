@@ -271,14 +271,19 @@ jobs:
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
       # Step
-      - name: Check Preview Output
+#      - name: Check Preview Output
+#        id: check_changes
+#        run: |
+#          if [[ "${{ steps.preview.outputs.output }}" =~ (to create|to delete|to update|changes) ]]; then
+#            echo "has_changes=true" >> $GITHUB_OUTPUT
+#          else
+#            echo "has_changes=false" >> $GITHUB_OUTPUT
+#          fi
+
+      - name: Check Preview Output (Forced True)
         id: check_changes
-        run: |
-          if [[ "${{ steps.preview.outputs.output }}" =~ (to create|to delete|to update|changes) ]]; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          fi
+        run: echo "has_changes=true" >> $GITHUB_OUTPUT
+
 
   platform-deploy:
     runs-on: ubuntu-latest
