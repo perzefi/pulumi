@@ -17,7 +17,7 @@ jobs:
         id: preview-step
         run: |
           echo "🔧 Building project..."
-          echo "status=success" >> $GITHUB_OUTPUT
+          echo "status=failed" >> $GITHUB_OUTPUT
   
 
   clients-deploy:
@@ -26,7 +26,7 @@ jobs:
     if: needs.clients-refresh-preview.outputs.preview_status == 'success'
     steps:
       - name: Run tests
-        run: asdasd
+        run: cho "✅ Running unit tests..."
 
   foundation-refresh-preview:
     runs-on: ubuntu-latest
