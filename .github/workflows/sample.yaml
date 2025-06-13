@@ -1,5 +1,4 @@
 name: Sample CI/CD Pipeline with Dependencies
-  More actions
 on:
   workflow_dispatch:
 
@@ -37,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [clients-refresh-preview, clients-deploy]
     # Check if s
-    if: !contains(needs.*.result, 'failure')
+    if: "!contains(needs.*.result, 'failure')"
 
     outputs:
       preview_status: ${{ steps.preview-step.outputs.status }}
@@ -63,7 +62,7 @@ jobs:
   platform-refresh-preview:
     runs-on: ubuntu-latest
     needs: [clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy]
-    if: !contains(needs.*.result, 'failure')
+    if: "!contains(needs.*.result, 'failure')"
     outputs:
       preview_status: ${{ steps.preview-step.outputs.status }}
     steps:
@@ -78,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy, platform-refresh-preview ]
     if: |
-      !contains(needs.*.result, 'failure') &&
+      "!contains(needs.*.result, 'failure')" &&
       needs.platform-refresh-preview.outputs.preview_status == 'success'
     steps:
       - name: Send Slack notification
