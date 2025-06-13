@@ -16,7 +16,7 @@ jobs:
       - name: Build project
         id: preview-step
         run: |
-          cho "Client refresh"
+          echo "Client refresh"
           echo "status=success" >> $GITHUB_OUTPUT
   
 
@@ -37,9 +37,6 @@ jobs:
     needs: [clients-refresh-preview, clients-deploy]
     # Check if s
     if: success()
-
-
-
     outputs:
       preview_status: ${{ steps.preview-step.outputs.status }}
 
