@@ -47,7 +47,7 @@ jobs:
         id: preview-step
         run: |
           echo "🧹 Linting source files..."
-          echo "status=faild" >> $GITHUB_OUTPUT
+          echo "status=success" >> $GITHUB_OUTPUT
 
 
   foundation-deploy:
@@ -75,7 +75,7 @@ jobs:
         id: preview-step
         run: |
           echo "🚀 Deploying to staging environment..."
-          echo "status=fail" >> $GITHUB_OUTPUT
+          echo "status=success" >> $GITHUB_OUTPUT
   
 
   platform-deploy:
