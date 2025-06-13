@@ -7,7 +7,7 @@ on:
 #  3. Ensured the deploy job properly references the output with `needs.preview.outputs.has_changes`
 # Stage CLIENT refresh and preview
 jobs:
-  client-refresh-preview:
+  clients-refresh-preview:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -63,10 +63,12 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
   # Stage CLIENT deploy if it is approved, if no changes skip.
-  client-deploy:
+  clients-deploy:
     runs-on: ubuntu-latest
-    needs: client-refresh-preview
-    if: needs.client-refresh-preview.outputs.has_changes == 'true'
+    needs: clients-refresh-preview
+    if: |
+      needs.clients-refresh-preview.result == 'success' && 
+      needs.clients-refresh-preview.outputs.has_changes == 'true'
     permissions:
       contents: read
       id-token: write
@@ -115,8 +117,8 @@ jobs:
   # Stage FOUNDATION refresh and preview
   foundation-refresh-preview:
     runs-on: ubuntu-latest
-    needs: client-deploy
-    if: always()
+    needs: [clients-refresh-preview, clients-deploy]
+    if: ${{ (success() || needs.clients-deploy.result == 'skipped') && !contains(needs.*.result, 'failure') }}
     permissions:
       contents: read
       id-token: write
@@ -176,8 +178,11 @@ jobs:
   # Stage FOUNDATION deploy if it is approved, if no changes skip.
   foundation-deploy:
     runs-on: ubuntu-latest
-    needs: foundation-refresh-preview
-    if: needs.foundation-refresh-preview.outputs.has_changes == 'true'
+    needs: [clients-refresh-preview, clients-deploy, foundation-refresh-preview]
+    if: |
+      !contains(needs.*.result, 'failure') &&
+      needs.foundation-refresh-preview.outputs.has_changes == 'true'
+#    if: needs.foundation-refresh-preview.outputs.has_changes == 'true'
     permissions:
       contents: read
       id-token: write
@@ -223,11 +228,11 @@ jobs:
 
 
 
-  # Stage FOUNDATION refresh and preview
+  # Stage PLATFORM refresh and preview
   platform-refresh-preview:
     runs-on: ubuntu-latest
-    needs: foundation-deploy
-    if: always()
+    needs: [clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy]
+    if: ${{ (success() || needs.foundation-deploy.result == 'skipped') && !contains(needs.*.result, 'failure') }}
     permissions:
       contents: read
       id-token: write
@@ -270,79 +275,63 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
-      # Step
-#      - name: Check Preview Output
-#        id: check_changes
-#        run: |
-#          if [[ "${{ steps.preview.outputs.output }}" =~ (to create|to delete|to update|changes) ]]; then
-#            echo "has_changes=true" >> $GITHUB_OUTPUT
-#          else
-#            echo "has_changes=false" >> $GITHUB_OUTPUT
-#          fi
 
-      - name: Check Preview Output (Forced True)
+      - name: Check Preview Output
         id: check_changes
-        run: echo "has_changes=true" >> $GITHUB_OUTPUT
+        run: |
+          if [[ "${{ steps.preview.outputs.output }}" =~ (to create|to delete|to update|changes) ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
 
 
-
-
-
-  platform-verify:
+  platform-deploy:
     runs-on: ubuntu-latest
-    needs: platform-refresh-preview
-    if: needs.platform-refresh-preview.outputs.has_changes == 'true'
-    steps:
-      - name: Echo platform change detected
-        run: echo "✅ Platform changes detected. Running verification steps..."
-
-      - name: Simulated verification
-        run: echo "🔍 Verifying platform resources post-preview (e.g., smoke tests, dry-run checks)"
-
-
-#  platform-deploy:
-#    runs-on: ubuntu-latest
-#    needs: platform-refresh-preview
+    needs: [ clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy, platform-refresh-preview ]
+    if: |
+      !contains(needs.*.result, 'failure') &&
+      needs.platform-refresh-preview.outputs.has_changes == 'true'
 #    if: needs.platform-refresh-preview.outputs.has_changes == 'true'
-#    permissions:
-#      contents: read
-#      id-token: write
-#      packages: write
-#    environment:
-#      name: dev
-#      url: ${{ steps.deploy.outputs.url }}
-#
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#
-#      - name: Install Pulumi
-#        uses: pulumi/actions@v5
-#
-#      - name: Install gcloud
-#        uses: google-github-actions/setup-gcloud@v1
-#        with:
-#          install_components: 'gke-gcloud-auth-plugin'
-#
-#      - name: gcloud authentication
-#        uses: google-github-actions/auth@v2
-#        with:
-#          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
-#          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
-#
-#      - name: NPM install
-#        env:
-#          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: npm install
-#
-#      - name: Pulumi Up
-#        id: deploy
-#        uses: pulumi/actions@v5
-#        with:
-#          command: up
-#          refresh: 'false'
-#          stack-name: platform-dev
-#          work-dir: platform
-#        env:
-#          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-#          USE_GKE_GCLOUD_AUTH_PLUGIN: True
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    environment:
+      name: dev
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Pulumi
+        uses: pulumi/actions@v5
+
+      - name: Install gcloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: gcloud authentication
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
+
+      - name: NPM install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm install
+
+      - name: Pulumi Up
+        id: deploy
+        uses: pulumi/actions@v5
+        with:
+          command: up
+          refresh: 'false'
+          stack-name: platform-dev
+          work-dir: platform
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          USE_GKE_GCLOUD_AUTH_PLUGIN: True
