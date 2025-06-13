@@ -78,37 +78,37 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install Pulumi
-        uses: pulumi/actions@v5
-
-      - name: Install gcloud
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          install_components: 'gke-gcloud-auth-plugin'
-
-      - name: gcloud authentication
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
-          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
-
-      - name: NPM install
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm install
-
-      - name: Pulumi Up
-        id: deploy
-        uses: pulumi/actions@v5
-        with:
-          command: up
-          refresh: 'false'
-          stack-name: clients-dev
-          work-dir: client
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          USE_GKE_GCLOUD_AUTH_PLUGIN: True
+#
+#      - name: Install Pulumi
+#        uses: pulumi/actions@v5
+#
+#      - name: Install gcloud
+#        uses: google-github-actions/setup-gcloud@v1
+#        with:
+#          install_components: 'gke-gcloud-auth-plugin'
+#
+#      - name: gcloud authentication
+#        uses: google-github-actions/auth@v2
+#        with:
+#          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
+#          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
+#
+#      - name: NPM install
+#        env:
+#          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: npm install
+#
+#      - name: Pulumi Up
+#        id: deploy
+#        uses: pulumi/actions@v5
+#        with:
+#          command: up
+#          refresh: 'false'
+#          stack-name: clients-dev
+#          work-dir: client
+#        env:
+#          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+#          USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
 
 
@@ -189,38 +189,38 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install Pulumi
-        uses: pulumi/actions@v5
-
-      - name: Install gcloud
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          install_components: 'gke-gcloud-auth-plugin'
-
-      - name: gcloud authentication
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
-          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
-
-      - name: NPM install
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm install
-
-      - name: Pulumi Up
-        id: deploy
-        uses: pulumi/actions@v5
-        with:
-          command: up
-          refresh: 'false'
-          stack-name: foundation-dev
-          work-dir: foundation
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          USE_GKE_GCLOUD_AUTH_PLUGIN: True
-
+#
+#      - name: Install Pulumi
+#        uses: pulumi/actions@v5
+#
+#      - name: Install gcloud
+#        uses: google-github-actions/setup-gcloud@v1
+#        with:
+#          install_components: 'gke-gcloud-auth-plugin'
+#
+#      - name: gcloud authentication
+#        uses: google-github-actions/auth@v2
+#        with:
+#          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
+#          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
+#
+#      - name: NPM install
+#        env:
+#          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: npm install
+#
+#      - name: Pulumi Up
+#        id: deploy
+#        uses: pulumi/actions@v5
+#        with:
+#          command: up
+#          refresh: 'false'
+#          stack-name: foundation-dev
+#          work-dir: foundation
+#        env:
+#          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+#          USE_GKE_GCLOUD_AUTH_PLUGIN: True
+#
 
 
   # Stage FOUNDATION refresh and preview
