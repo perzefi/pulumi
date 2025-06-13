@@ -47,7 +47,7 @@ jobs:
       - name: Lint code
         id: preview-step
         run: |
-          echo "🧹 Linting source files..."
+          cho "🧹 Linting source files..."
           echo "status=SUCCESS" >> $GITHUB_OUTPUT
 
   
