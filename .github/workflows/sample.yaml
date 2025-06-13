@@ -17,7 +17,7 @@ jobs:
         id: preview-step
         run: |
           echo "Client refresh"
-          echo "status=success" >> $GITHUB_OUTPUT
+          echo "status=fail" >> $GITHUB_OUTPUT
   
 
   clients-deploy:
