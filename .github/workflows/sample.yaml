@@ -23,7 +23,10 @@ jobs:
   clients-deploy:
     runs-on: ubuntu-latest
     needs: clients-refresh-preview
-    if: needs.clients-refresh-preview.outputs.preview_status == 'success'
+    if: |
+      success() && 
+      needs.clients-refresh-preview.outputs.preview_status == 'success'
+
     steps:
       - name: Run tests
         run: cho "✅ Running unit tests..."
