@@ -35,7 +35,11 @@ jobs:
   foundation-refresh-preview:
     runs-on: ubuntu-latest
     needs: [clients-refresh-preview, clients-deploy]
-    if: ${{ !contains(needs.*.result, 'failure') }}
+    if: |
+      !contains(needs.*.result, 'failure') && 
+      (needs.clients-deploy.result == 'success' || needs.clients-deploy.result == 'skipped')
+
+    #    if: ${{ !contains(needs.*.result, 'failure') }}
     outputs:
       preview_status: ${{ steps.preview-step.outputs.status }}
     steps:
@@ -60,7 +64,7 @@ jobs:
   platform-refresh-preview:
     runs-on: ubuntu-latest
     needs: [clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy]
-    if: "!contains(needs.*.result, 'failure')"
+    if: ${{ !contains(needs.*.result, 'failure') }}
     outputs:
       preview_status: ${{ steps.preview-step.outputs.status }}
     steps:
