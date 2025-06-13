@@ -16,8 +16,8 @@ jobs:
       - name: Build project
         id: preview-step
         run: |
-          asdasd
-          echo "status=success" >> $GITHUB_OUTPUT
+          echo "Client refresh"
+          echo "status=failed" >> $GITHUB_OUTPUT
   
 
   clients-deploy:
