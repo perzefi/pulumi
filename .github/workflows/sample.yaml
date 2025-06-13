@@ -26,7 +26,7 @@ jobs:
     if: needs.clients-refresh-preview.outputs.preview_status == 'success'
     steps:
       - name: Run tests
-        run: echo "✅ Running unit tests..."
+        run: asdasd
 
   foundation-refresh-preview:
     runs-on: ubuntu-latest
