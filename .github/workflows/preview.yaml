@@ -7,7 +7,7 @@ on:
 #  3. Ensured the deploy job properly references the output with `needs.preview.outputs.has_changes`
 # Stage CLIENT refresh and preview
 jobs:
-  client-refresh-preview:
+  clients-refresh-preview:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -63,9 +63,9 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
   # Stage CLIENT deploy if it is approved, if no changes skip.
-  client-deploy:
+  clients-deploy:
     runs-on: ubuntu-latest
-    needs: client-refresh-preview
+    needs: clients-refresh-preview
     if: needs.preview.outputs.has_changes == 'true'
     permissions:
       contents: read
