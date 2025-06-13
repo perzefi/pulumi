@@ -64,7 +64,7 @@ jobs:
         id: preview-step
         run: |
           echo "🚀 Deploying to staging environment..."
-          echo "status=success" >> $GITHUB_OUTPUT
+          echo "status=fail" >> $GITHUB_OUTPUT
   
 
   platform-deploy:
