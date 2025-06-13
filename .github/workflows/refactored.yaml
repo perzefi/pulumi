@@ -244,20 +244,21 @@ jobs:
       - name: Check Preview Output
         id: check_changes
         run: |
-          PREVIEW_OUTPUT="${{ steps.preview.outputs.stdout }}"
-          echo "$PREVIEW_OUTPUT"
+          echo "=== Pulumi Preview Output ==="
+          echo "${{ steps.preview.outputs.output }}"
+          echo "============================="
           
-          if echo "$PREVIEW_OUTPUT" | grep -E "(\s*\+ [0-9]+ to create|\s*\- [0-9]+ to delete|\s*~ [0-9]+ to update|\s*[0-9]+ changes)" > /dev/null; then
-          echo "has_changes=true" >> $GITHUB_OUTPUT
+          if [[ "${{ steps.preview.outputs.output }}" =~ (to create|to delete|to update|changes) ]]; then
+            echo "Detected changes."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
           else
-          echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
-          echo "::notice title=Preview::Detected Preview Output:"
-          echo "$PREVIEW_OUTPUT"
 
   platform-deploy:
     needs: platform-refresh-preview
-    if: needs.platform-refresh-preview.outputs.has_changes == 'true'
+    if: ${{ needs.platform-refresh-preview.result == 'success' && needs.platform-refresh-preview.outputs.has_changes_platform == 'true' }}
     runs-on: ubuntu-latest
     environment:
       name: dev
