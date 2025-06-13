@@ -25,8 +25,9 @@ jobs:
     needs: clients-refresh-preview
     # Check if previews job is successful, AND  has a match changes
     if: |
-      success() && 
+      needs.clients-refresh-preview.result == 'success' && 
       needs.clients-refresh-preview.outputs.preview_status == 'success'
+    
 
     steps:
       - name: Run tests
@@ -36,7 +37,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [clients-refresh-preview, clients-deploy]
     # Check if s
-    if: success()
+    if: !contains(needs.*.result, 'failure')
+
     outputs:
       preview_status: ${{ steps.preview-step.outputs.status }}
 
@@ -50,9 +52,9 @@ jobs:
 
   foundation-deploy:
     runs-on: ubuntu-latest
-    needs: foundation-refresh-preview
+    needs: [clients-refresh-preview, clients-deploy, foundation-refresh-preview]
     if: |
-      always() &&
+      !contains(needs.*.result, 'failure') &&
       needs.foundation-refresh-preview.outputs.preview_status == 'success'
     steps:
       - name: Run security scan
@@ -60,8 +62,8 @@ jobs:
 
   platform-refresh-preview:
     runs-on: ubuntu-latest
-    needs: foundation-deploy
-    if: always()
+    needs: [clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy]
+    if: !contains(needs.*.result, 'failure')
     outputs:
       preview_status: ${{ steps.preview-step.outputs.status }}
     steps:
@@ -74,9 +76,9 @@ jobs:
 
   platform-deploy:
     runs-on: ubuntu-latest
-    needs: platform-refresh-preview
+    needs: [ clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy, platform-refresh-preview ]
     if: |
-      always() &&
+      !contains(needs.*.result, 'failure') &&
       needs.platform-refresh-preview.outputs.preview_status == 'success'
     steps:
       - name: Send Slack notification
