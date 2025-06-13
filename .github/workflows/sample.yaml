@@ -16,7 +16,7 @@ jobs:
       - name: Build project
         id: preview-step
         run: |
-          echo "🔧 Building project..."
+          echo sdsad
           echo "status=failed" >> $GITHUB_OUTPUT
   
 
