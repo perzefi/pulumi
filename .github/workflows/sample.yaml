@@ -74,7 +74,7 @@ jobs:
       - name: Deploy to staging
         id: preview-step
         run: |
-          cho "🚀 Deploying to staging environment..."
+          echo "🚀 Deploying to staging environment..."
           echo "status=success" >> $GITHUB_OUTPUT
   
 
