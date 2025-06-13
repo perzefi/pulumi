@@ -23,17 +23,19 @@ jobs:
   clients-deploy:
     runs-on: ubuntu-latest
     needs: clients-refresh-preview
+    # Check if previews job is successful, AND  has a match changes
     if: |
       success() && 
       needs.clients-refresh-preview.outputs.preview_status == 'success'
 
     steps:
       - name: Run tests
-        run: cho "✅ Running unit tests..."
+        run: echo "✅ Running unit tests..."
 
   foundation-refresh-preview:
     runs-on: ubuntu-latest
     needs: clients-deploy
+    # Check if s
     if: |
       success() ||
       needs.clients-deploy.result == 'skipped'
