@@ -1,5 +1,5 @@
 name: Sample CI/CD Pipeline with Dependencies
-
+  More actions
 on:
   workflow_dispatch:
 
@@ -40,7 +40,7 @@ jobs:
         id: preview-step
         run: |
           echo "🧹 Linting source files..."
-          echo "status=failed" >> $GITHUB_OUTPUT
+          echo "status=sucess" >> $GITHUB_OUTPUT
   
 
   foundation-deploy:
