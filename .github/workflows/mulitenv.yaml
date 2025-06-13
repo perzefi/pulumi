@@ -286,7 +286,6 @@ jobs:
   platform-deploy:
     runs-on: ubuntu-latest
     needs: platform-refresh-preview
-    if: needs.platform-refresh-preview.outputs.has_changes_platform == 'true'
     permissions:
       contents: read
       id-token: write
