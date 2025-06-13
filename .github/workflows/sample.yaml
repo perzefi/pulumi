@@ -72,7 +72,7 @@ jobs:
     needs: platform-refresh-preview
     if: |
       always() &&
-      needs.foundation-refresh-preview.outputs.preview_status == 'success'
+      needs.platform-refresh-preview.outputs.preview_status == 'success'
     steps:
       - name: Send Slack notification
         run: echo "📣 Notifying team of successful deployment..."
