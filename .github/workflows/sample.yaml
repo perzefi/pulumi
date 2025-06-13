@@ -34,7 +34,7 @@ jobs:
 
   foundation-refresh-preview:
     runs-on: ubuntu-latest
-    needs: clients-deploy
+    needs: [clients-refresh-preview, clients-deploy]
     # Check if s
     if: |
       success() ||
