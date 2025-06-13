@@ -37,8 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [clients-refresh-preview, clients-deploy]
     # Check if s
-    if: | 
-      !contains(needs.*.result, 'failure')
+    if: !contains(needs.*.result, 'failure')
 
     outputs:
       preview_status: ${{ steps.preview-step.outputs.status }}
