@@ -223,7 +223,7 @@ jobs:
 
 
 
-  # Stage Patform refresh and preview
+  # Stage FOUNDATION refresh and preview
   platform-refresh-preview:
     runs-on: ubuntu-latest
     needs: foundation-deploy
@@ -233,11 +233,14 @@ jobs:
       id-token: write
       packages: write
     outputs:
-      preview_done: ${{ steps.set_output.outputs.done }}
+      has_changes_platform: ${{ steps.check_changes.outputs.has_changes }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Pulumi
+        uses: pulumi/actions@v5
 
       - name: Install gcloud
         uses: google-github-actions/setup-gcloud@v1
@@ -267,52 +270,62 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
-      - name: Set output to allow apply job
-        id: set_output
-        run: echo "done=true" >> "$GITHUB_OUTPUT"
-  apply:
-    name: Pulumi Apply (Manual Approval)
-    needs: platform-refresh-preview
-    if: needs.platform-refresh-preview.outputs.preview_done == 'true'
+      - name: Check Preview Output
+        id: check_changes
+        run: |
+          if [[ "${{ steps.preview.outputs.output }}" =~ (to create|to delete|to update|changes) ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi  
+
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+
+  platform-deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: dev  # 👈 This triggers approval AFTER preview
+    needs: platform-refresh-preview
+    if: needs.platform-refresh-preview.outputs.has_changes_platform == 'true'
     permissions:
       contents: read
       id-token: write
       packages: write
+    environment:
+      name: dev
+      url: ${{ steps.deploy.outputs.url }}
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Pulumi CLI
+      - name: Install Pulumi
         uses: pulumi/actions@v5
 
-      - name: Install gcloud SDK
+      - name: Install gcloud
         uses: google-github-actions/setup-gcloud@v1
         with:
           install_components: 'gke-gcloud-auth-plugin'
 
-      - name: Authenticate to GCP
+      - name: gcloud authentication
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
 
-      - name: Install Node.js packages
+      - name: NPM install
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm install
 
-      - name: Pulumi Up (After Approval)
+      - name: Pulumi Up
         id: deploy
         uses: pulumi/actions@v5
         with:
           command: up
           refresh: 'false'
-          stack-name: foundation-dev
-          work-dir: foundation
+          stack-name: platform-dev
+          work-dir: platform
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
