@@ -59,29 +59,26 @@ jobs:
       - name: Check Changes
         id: check_changes
         run: |
-          PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
-          
-          # Simple change detection
-          if echo "$PREVIEW_OUTPUT" | grep -q "to create\|to delete\|to update\|to replace"; then
-            # Extract counts with safer approach
-            CREATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -o "[0-9]\+ to create" | grep -o "[0-9]\+" || echo "0")
-            DELETE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -o "[0-9]\+ to delete" | grep -o "[0-9]\+" || echo "0")
-            UPDATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -o "[0-9]\+ to update" | grep -o "[0-9]\+" || echo "0")
-            REPLACE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -o "[0-9]\+ to replace" | grep -o "[0-9]\+" || echo "0")
-          
-            # Set defaults
+          echo "${{ steps.preview.outputs.output }}" > preview-output.txt
+
+          if grep -E "to create|to delete|to update|to replace" preview-output.txt; then
+            CREATE_COUNT=$(grep -o "[0-9]\+ to create" preview-output.txt | grep -o "[0-9]\+" || echo "0")
+            DELETE_COUNT=$(grep -o "[0-9]\+ to delete" preview-output.txt | grep -o "[0-9]\+" || echo "0")
+            UPDATE_COUNT=$(grep -o "[0-9]\+ to update" preview-output.txt | grep -o "[0-9]\+" || echo "0")
+            REPLACE_COUNT=$(grep -o "[0-9]\+ to replace" preview-output.txt | grep -o "[0-9]\+" || echo "0")
+
             CREATE_COUNT=${CREATE_COUNT:-0}
             DELETE_COUNT=${DELETE_COUNT:-0}
             UPDATE_COUNT=${UPDATE_COUNT:-0}
             REPLACE_COUNT=${REPLACE_COUNT:-0}
-          
+
             SUMMARY="Create: $CREATE_COUNT, Update: $UPDATE_COUNT, Delete: $DELETE_COUNT, Replace: $REPLACE_COUNT"
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "changes_summary=$SUMMARY" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "changes_summary=$SUMMARY" >> "$GITHUB_OUTPUT"
             echo "::notice title=Client Changes Detected::$SUMMARY"
           else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "changes_summary=No changes detected" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "changes_summary=No changes detected" >> "$GITHUB_OUTPUT"
             echo "::notice title=Client Preview::No infrastructure changes detected"
           fi
 
