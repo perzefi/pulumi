@@ -275,16 +275,16 @@ jobs:
       - name: Install Pulumi
         uses: pulumi/actions@v5
 
+      - name: Install gcloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          install_components: 'gke-gcloud-auth-plugin'
+
       - name: gcloud authentication
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
-
-      - name: Install gcloud
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          install_components: 'gke-gcloud-auth-plugin'
 
       - name: NPM install
         env:
@@ -319,31 +319,22 @@ jobs:
 #            echo "::notice title=No Pulumi Changes in PLATFORM Stack::No changes detected"
 #          fi
 
-#      - name: Check Pulumi Changes
-#        id: check_changes
-#        run: |
-#          echo "${{ steps.preview.outputs.output }}" > preview-output.txt
-#
-#          # Look for the changes summary line
-#          if grep -q "[0-9]+ changes\." preview-output.txt; then
-#            CHANGES=$(grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes\.)" preview-output.txt | tr '\n' ' ')
-#            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-#            echo "changes_summary=$CHANGES" >> "$GITHUB_OUTPUT"
-#            echo "::notice title=Pulumi Changes Detected in PLATFORM Stack::$CHANGES"
-#          else
-#            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-#            echo "changes_summary=No changes detected" >> "$GITHUB_OUTPUT"
-#            echo "::notice title=No Pulumi Changes in PLATFORM Stack::No changes detected"
-#          fi
-
-          id: check_changes
-          run: |
-            PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
-            if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
-              echo "has_changes=true" >> $GITHUB_OUTPUT
-            else
-              echo "has_changes=false" >> $GITHUB_OUTPUT
-            fi
+      - name: Check Pulumi Changes
+        id: check_changes
+        run: |
+          echo "${{ steps.preview.outputs.output }}" > preview-output.txt
+          
+          # Look for the changes summary line
+          if grep -q "[0-9]+ changes\." preview-output.txt; then
+            CHANGES=$(grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes\.)" preview-output.txt | tr '\n' ' ')
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "changes_summary=$CHANGES" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Pulumi Changes Detected in PLATFORM Stack::$CHANGES"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "changes_summary=No changes detected" >> "$GITHUB_OUTPUT"
+            echo "::notice title=No Pulumi Changes in PLATFORM Stack::No changes detected"
+          fi
   platform-deploy:
     runs-on: ubuntu-latest
     needs: [ clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy, platform-refresh-preview ]
