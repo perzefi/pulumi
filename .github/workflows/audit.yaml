@@ -43,6 +43,7 @@ jobs:
           refresh: 'false'
           stack-name: clients-dev
           work-dir: client
+          diff: true
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
