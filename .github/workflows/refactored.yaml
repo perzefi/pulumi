@@ -54,7 +54,7 @@ jobs:
           if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
-            aaa "has_changes=false" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
 
   clients-deploy:
