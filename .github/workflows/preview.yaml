@@ -115,7 +115,7 @@ jobs:
   # Stage FOUNDATION refresh and preview
   foundation-refresh-preview:
     runs-on: ubuntu-latest
-    needs: client-deploy
+    needs: clients-deploy
     if: always()
     permissions:
       contents: read
