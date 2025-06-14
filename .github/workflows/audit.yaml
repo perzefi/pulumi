@@ -259,8 +259,17 @@ jobs:
 
   platform-refresh-preview:
     runs-on: ubuntu-latest
-    needs: [clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy]
-    if: always() && !cancelled() && !contains(needs.*.result, 'failure')
+#    needs: [clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy]
+#    if: always() && !cancelled() && !contains(needs.*.result, 'failure')
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.clients-refresh-preview.result != 'failure' &&
+      needs.clients-deploy.result != 'failure' &&
+      needs.foundation-refresh-preview.result != 'failure' &&
+      needs.foundation-deploy.result != 'failure' &&
+      needs.platform-refresh-preview.result == 'success' &&
+      needs.platform-refresh-preview.outputs.has_changes == 'true'
     permissions:
       contents: read
       id-token: write
