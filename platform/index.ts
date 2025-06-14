@@ -2,7 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as gcp from "@pulumi/gcp";
 
 // Create a GCP resource (Storage Bucket)
-const bucket = new gcp.storage.Bucket("platform-bucket", {
+const bucket = new gcp.storage.Bucket("plat-bucket", {
     location: "US"
 });
 
