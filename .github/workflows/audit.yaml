@@ -43,6 +43,7 @@ jobs:
           refresh: 'false'
           stack-name: clients-dev
           work-dir: client
+          diff: true
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
@@ -57,20 +58,22 @@ jobs:
 #            echo "has_changes=false" >> $GITHUB_OUTPUT
 #          fi
 
-      - name: Check Changes
+      - name: Check Pulumi Changes
         id: check_changes
         run: |
-          PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
-          
-          if echo "$PREVIEW_OUTPUT" | grep -E "to (create|delete|update|replace)" > /dev/null; then
-            SUMMARY=$(echo "$PREVIEW_OUTPUT" | grep -E "[0-9]+ to (create|delete|update|replace)" | tr '\n' ', ' | sed 's/, $//')
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "changes_summary=$SUMMARY" >> $GITHUB_OUTPUT
-            echo "::notice title=Pulumi Changes::$SUMMARY"
+          echo "${{ steps.preview.outputs.output }}" > preview-output.txt
+          CHANGES=$(grep -E "to create|to delete|to update|to replace" preview-output.txt || true)
+
+          if [ -n "$CHANGES" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "changes_summary=$CHANGES" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Pulumi Change Detected::$CHANGES"
           else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "::notice title=Pulumi Preview::No infrastructure changes detected"
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "changes_summary=No changes detected" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Pulumi Preview::No changes detected"
           fi
+
 
       - name: Save Preview Output
         if: steps.check_changes.outputs.has_changes == 'true'
