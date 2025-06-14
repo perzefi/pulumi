@@ -63,14 +63,20 @@ jobs:
           PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
           
           # More robust change detection
-          if echo "$PREVIEW_OUTPUT" | grep -E "(\+\s+[0-9]+\s+to\s+create|\-\s+[0-9]+\s+to\s+delete|~\s+[0-9]+\s+to\s+update|\+\-\s+[0-9]+\s+to\s+replace)" > /dev/null; then
+          if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|\+\- [0-9]+ to replace)" > /dev/null; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           
-            # Extract change summary for approval decision
-            CREATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+\s+([0-9]+)\s+to\s+create' | grep -oE '[0-9]+' || echo "0")
-            DELETE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\-\s+([0-9]+)\s+to\s+delete' | grep -oE '[0-9]+' || echo "0")
-            UPDATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '~\s+([0-9]+)\s+to\s+update' | grep -oE '[0-9]+' || echo "0")
-            REPLACE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+\-\s+([0-9]+)\s+to\s+replace' | grep -oE '[0-9]+' || echo "0")
+            # Extract change summary for approval decision - using safer approach
+            CREATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+ ([0-9]+) to create' | grep -oE '[0-9]+' | head -1)
+            DELETE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\- ([0-9]+) to delete' | grep -oE '[0-9]+' | head -1)
+            UPDATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '~ ([0-9]+) to update' | grep -oE '[0-9]+' | head -1)
+            REPLACE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+\- ([0-9]+) to replace' | grep -oE '[0-9]+' | head -1)
+          
+            # Set defaults if empty
+            CREATE_COUNT=${CREATE_COUNT:-0}
+            DELETE_COUNT=${DELETE_COUNT:-0}
+            UPDATE_COUNT=${UPDATE_COUNT:-0}
+            REPLACE_COUNT=${REPLACE_COUNT:-0}
           
             SUMMARY="Create: $CREATE_COUNT, Update: $UPDATE_COUNT, Delete: $DELETE_COUNT, Replace: $REPLACE_COUNT"
             echo "changes_summary=$SUMMARY" >> $GITHUB_OUTPUT
@@ -247,13 +253,20 @@ jobs:
         run: |
           PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
           
-          if echo "$PREVIEW_OUTPUT" | grep -E "(\+\s+[0-9]+\s+to\s+create|\-\s+[0-9]+\s+to\s+delete|~\s+[0-9]+\s+to\s+update|\+\-\s+[0-9]+\s+to\s+replace)" > /dev/null; then
+          if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|\+\- [0-9]+ to replace)" > /dev/null; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           
-            CREATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+\s+([0-9]+)\s+to\s+create' | grep -oE '[0-9]+' || echo "0")
-            DELETE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\-\s+([0-9]+)\s+to\s+delete' | grep -oE '[0-9]+' || echo "0")
-            UPDATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '~\s+([0-9]+)\s+to\s+update' | grep -oE '[0-9]+' || echo "0")
-            REPLACE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+\-\s+([0-9]+)\s+to\s+replace' | grep -oE '[0-9]+' || echo "0")
+            # Extract change summary for approval decision - using safer approach
+            CREATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+ ([0-9]+) to create' | grep -oE '[0-9]+' | head -1)
+            DELETE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\- ([0-9]+) to delete' | grep -oE '[0-9]+' | head -1)
+            UPDATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '~ ([0-9]+) to update' | grep -oE '[0-9]+' | head -1)
+            REPLACE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+\- ([0-9]+) to replace' | grep -oE '[0-9]+' | head -1)
+          
+            # Set defaults if empty
+            CREATE_COUNT=${CREATE_COUNT:-0}
+            DELETE_COUNT=${DELETE_COUNT:-0}
+            UPDATE_COUNT=${UPDATE_COUNT:-0}
+            REPLACE_COUNT=${REPLACE_COUNT:-0}
           
             SUMMARY="Create: $CREATE_COUNT, Update: $UPDATE_COUNT, Delete: $DELETE_COUNT, Replace: $REPLACE_COUNT"
             echo "changes_summary=$SUMMARY" >> $GITHUB_OUTPUT
@@ -424,13 +437,20 @@ jobs:
         run: |
           PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
           
-          if echo "$PREVIEW_OUTPUT" | grep -E "(\+\s+[0-9]+\s+to\s+create|\-\s+[0-9]+\s+to\s+delete|~\s+[0-9]+\s+to\s+update|\+\-\s+[0-9]+\s+to\s+replace)" > /dev/null; then
+          if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|\+\- [0-9]+ to replace)" > /dev/null; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           
-            CREATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+\s+([0-9]+)\s+to\s+create' | grep -oE '[0-9]+' || echo "0")
-            DELETE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\-\s+([0-9]+)\s+to\s+delete' | grep -oE '[0-9]+' || echo "0")
-            UPDATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '~\s+[0-9]+\s+to\s+update' | grep -oE '[0-9]+' || echo "0")
-            REPLACE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+\-\s+([0-9]+)\s+to\s+replace' | grep -oE '[0-9]+' || echo "0")
+            # Extract change summary for approval decision - using safer approach
+            CREATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+ ([0-9]+) to create' | grep -oE '[0-9]+' | head -1)
+            DELETE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\- ([0-9]+) to delete' | grep -oE '[0-9]+' | head -1)
+            UPDATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '~ ([0-9]+) to update' | grep -oE '[0-9]+' | head -1)
+            REPLACE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -oE '\+\- ([0-9]+) to replace' | grep -oE '[0-9]+' | head -1)
+          
+            # Set defaults if empty
+            CREATE_COUNT=${CREATE_COUNT:-0}
+            DELETE_COUNT=${DELETE_COUNT:-0}
+            UPDATE_COUNT=${UPDATE_COUNT:-0}
+            REPLACE_COUNT=${REPLACE_COUNT:-0}
           
             SUMMARY="Create: $CREATE_COUNT, Update: $UPDATE_COUNT, Delete: $DELETE_COUNT, Replace: $REPLACE_COUNT"
             echo "changes_summary=$SUMMARY" >> $GITHUB_OUTPUT
