@@ -48,21 +48,11 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
-#      - name: Check Preview Output
-#        id: check_changes
-#        run: |
-#          PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
-#          if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
-#            echo "has_changes=true" >> $GITHUB_OUTPUT
-#          else
-#            echo "has_changes=false" >> $GITHUB_OUTPUT
-#          fi
-
       - name: Check Pulumi Changes
         id: check_changes
         run: |
-          echo "${{ steps.preview.outputs.output }}" > preview-preview.txt
-          CHANGES=$(grep -E "to create|to delete|to update|to replace" preview-preview.txt || true)
+          echo "${{ steps.preview.outputs.output }}" > preview-output.txt
+          CHANGES=$(grep -E "to create|to delete|to update|to replace" preview-output.txt || true)
 
           if [ -n "$CHANGES" ]; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
@@ -148,6 +138,9 @@ jobs:
           echo "Deployment completed at: $(date)" > deployment-outputs/clients-deploy.txt
           echo "Commit: ${{ github.sha }}" >> deployment-outputs/clients-deploy.txt
           echo "Deployed by: ${{ github.actor }}" >> deployment-outputs/clients-deploy.txt
+          echo "---" >> preview-outputs/clients-preview.txt
+          echo "${{ steps.deploy.outputs.output }}" >> preview-outputs/clients-deploy.txt
+
 
       - name: Upload Deployment Artifact
         uses: actions/upload-artifact@v4
@@ -203,15 +196,32 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
-      - name: Check Preview Output
+#      - name: Check Preview Output
+#        id: check_changes
+#        run: |
+#          PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
+#          if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
+#            echo "has_changes=true" >> $GITHUB_OUTPUT
+#          else
+#            echo "has_changes=false" >> $GITHUB_OUTPUT
+#          fi
+      - name: Check Pulumi Changes
         id: check_changes
         run: |
-          PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
-          if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "${{ steps.preview.outputs.output }}" > preview-output.txt
+          CHANGES=$(grep -E "to create|to delete|to update|to replace" preview-output.txt || true)
+
+          if [ -n "$CHANGES" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "changes_summary=$CHANGES" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Pulumi Change Detected in FOUNDATION Stack::$CHANGES"
           else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "changes_summary=No changes detected" >> "$GITHUB_OUTPUT"
+            echo "::notice title=No Pulumi Changes in FOUNDATION Stack::No changes detected"
           fi
+
+
 
   foundation-deploy:
     runs-on: ubuntu-latest
@@ -306,14 +316,20 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
-      - name: Check Preview Output
+      - name: Check Pulumi Changes
         id: check_changes
         run: |
-          PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
-          if echo "$PREVIEW_OUTPUT" | grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes)" > /dev/null; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "${{ steps.preview.outputs.output }}" > preview-output.txt
+          CHANGES=$(grep -E "to create|to delete|to update|to replace" preview-output.txt || true)
+
+          if [ -n "$CHANGES" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "changes_summary=$CHANGES" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Pulumi Change Detected in PLATFORM Stack::$CHANGES"
           else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "changes_summary=No changes detected" >> "$GITHUB_OUTPUT"
+            echo "::notice title=No Pulumi Changes in PLATFORM Stack::No changes detected"
           fi
 
   platform-deploy:
