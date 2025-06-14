@@ -161,20 +161,33 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
+#      - name: Check Preview Output
+#        id: check_changes
+#        run: |
+#          PREVIEW_OUTPUT="${{ steps.preview.outputs.stdout }}"
+#          echo "$PREVIEW_OUTPUT"
+#
+#          if echo "$PREVIEW_OUTPUT" | grep -E "(\s*\+ [0-9]+ to create|\s*\- [0-9]+ to delete|\s*~ [0-9]+ to update|\s*[0-9]+ changes)" > /dev/null; then
+#          echo "has_changes=true" >> $GITHUB_OUTPUT
+#          else
+#          echo "has_changes=false" >> $GITHUB_OUTPUT
+#          fi
+#          echo "::notice title=Preview::Detected Preview Output:"
+#          echo "$PREVIEW_OUTPUT"
+
       - name: Check Preview Output
         id: check_changes
         run: |
-          if [[ "${{ steps.preview.outputs.output }}" =~ (to create|to delete|to update|changes) ]]; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+          PREVIEW_OUTPUT="${{ steps.preview.outputs.stdout }}"
+          echo "$PREVIEW_OUTPUT"
+          
+          if echo "$PREVIEW_OUTPUT" | grep -E "(\s*\+ [0-9]+ to create|\s*\- [0-9]+ to delete|\s*~ [0-9]+ to update|\s*[0-9]+ changes)" > /dev/null; then
+          echo "has_changes=true" >> $GITHUB_OUTPUT
           else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          fi  
-
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-
-
-
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+          echo "::notice title=Preview::Detected Preview Output:"
+          echo "$PREVIEW_OUTPUT"
   # Stage FOUNDATION deploy if it is approved, if no changes skip.
   foundation-deploy:
     runs-on: ubuntu-latest
