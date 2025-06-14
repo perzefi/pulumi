@@ -1,17 +1,23 @@
-name: Check preview Condition
+name: 1 Secure deployment
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'client/**'
+      - 'foundation/**'
+      - 'platform/**'
 
 jobs:
-  preview:
+  clients-preview:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
       packages: write
+      pull-requests: write
     outputs:
       has_changes: ${{ steps.check_changes.outputs.has_changes }}
-
+      changes_summary: ${{ steps.check_changes.outputs.changes_summary }}
 
     steps:
       - name: Checkout
@@ -41,36 +47,89 @@ jobs:
         uses: pulumi/actions@v5
         with:
           command: preview
-          refresh: 'true'
+          refresh: true
           stack-name: clients-dev
           work-dir: client
+          comment-on-pr: true
+          diff: true
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
 
-      - name: Check Preview Output
+      - name: Check Changes
         id: check_changes
         run: |
-          if [[ "${{ steps.preview.outputs.output }}" =~ (to create|to delete|to update|changes) ]]; then
+          PREVIEW_OUTPUT="${{ steps.preview.outputs.output }}"
+          
+          # Simple change detection
+          if echo "$PREVIEW_OUTPUT" | grep -q "to create\|to delete\|to update\|to replace"; then
+            # Extract counts with safer approach
+            CREATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -o "[0-9]\+ to create" | grep -o "[0-9]\+" || echo "0")
+            DELETE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -o "[0-9]\+ to delete" | grep -o "[0-9]\+" || echo "0")
+            UPDATE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -o "[0-9]\+ to update" | grep -o "[0-9]\+" || echo "0")
+            REPLACE_COUNT=$(echo "$PREVIEW_OUTPUT" | grep -o "[0-9]\+ to replace" | grep -o "[0-9]\+" || echo "0")
+          
+            # Set defaults
+            CREATE_COUNT=${CREATE_COUNT:-0}
+            DELETE_COUNT=${DELETE_COUNT:-0}
+            UPDATE_COUNT=${UPDATE_COUNT:-0}
+            REPLACE_COUNT=${REPLACE_COUNT:-0}
+          
+            SUMMARY="Create: $CREATE_COUNT, Update: $UPDATE_COUNT, Delete: $DELETE_COUNT, Replace: $REPLACE_COUNT"
             echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "changes_summary=$SUMMARY" >> $GITHUB_OUTPUT
+            echo "::notice title=Client Changes Detected::$SUMMARY"
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
-          fi  
+            echo "changes_summary=No changes detected" >> $GITHUB_OUTPUT
+            echo "::notice title=Client Preview::No infrastructure changes detected"
+          fi
 
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      - name: Save Preview Output
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          mkdir -p preview-outputs
+          echo "Timestamp: $(date)" > preview-outputs/clients-preview.txt
+          echo "Commit: ${{ github.sha }}" >> preview-outputs/clients-preview.txt
+          echo "Actor: ${{ github.actor }}" >> preview-outputs/clients-preview.txt
+          echo "---" >> preview-outputs/clients-preview.txt
+          echo "${{ steps.preview.outputs.output }}" >> preview-outputs/clients-preview.txt
 
-  deploy:
+      - name: Upload Preview Artifact
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: clients-preview-output
+          path: preview-outputs/
+          retention-days: 30
+
+  clients-approval:
     runs-on: ubuntu-latest
-    needs: preview
-    if: needs.preview.outputs.has_changes == 'true'
+    needs: clients-preview
+    if: needs.clients-preview.outputs.has_changes == 'true'
+    environment:
+      name: clients-approval
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Display Changes for Approval
+        run: |
+          echo "## Client Infrastructure Changes Detected"
+          echo "**Changes Summary:** ${{ needs.clients-preview.outputs.changes_summary }}"
+          echo "**Repository:** ${{ github.repository }}"
+          echo "**Branch:** ${{ github.ref }}"
+          echo "**Commit:** ${{ github.sha }}"
+          echo "**Triggered by:** ${{ github.actor }}"
+
+  clients-deploy:
+    runs-on: ubuntu-latest
+    needs: [clients-preview, clients-approval]
+    if: needs.clients-preview.outputs.has_changes == 'true'
     permissions:
       contents: read
       id-token: write
       packages: write
     environment:
       name: dev
-      url: ${{ steps.deploy.outputs.url }}
 
     steps:
       - name: Checkout
@@ -95,14 +154,32 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm install
 
-      - name: Pulumi Up
-        id: deploy
+      - name: Pre-deployment Validation
+        run: |
+          echo "Deploying clients-dev stack"
+          echo "Changes: ${{ needs.clients-preview.outputs.changes_summary }}"
+
+      - name: Pulumi Deploy
         uses: pulumi/actions@v5
         with:
           command: up
-          refresh: 'true'
+          refresh: false
           stack-name: clients-dev
           work-dir: client
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           USE_GKE_GCLOUD_AUTH_PLUGIN: True
+
+      - name: Save Deployment Output
+        run: |
+          mkdir -p deployment-outputs
+          echo "Deployment completed: $(date)" > deployment-outputs/clients-deploy.txt
+          echo "Commit: ${{ github.sha }}" >> deployment-outputs/clients-deploy.txt
+          echo "Deployed by: ${{ github.actor }}" >> deployment-outputs/clients-deploy.txt
+
+      - name: Upload Deployment Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: clients-deployment-output
+          path: deployment-outputs/
+          retention-days: 90
