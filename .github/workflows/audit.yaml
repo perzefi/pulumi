@@ -139,7 +139,7 @@ jobs:
           echo "Deployment completed at: $(date)" > deployment-outputs/clients-deploy.txt
           echo "Commit: ${{ github.sha }}" >> deployment-outputs/clients-deploy.txt
           echo "Deployed by: ${{ github.actor }}" >> deployment-outputs/clients-deploy.txt
-          echo "---" >> preview-outputs/clients-preview.txt
+          echo "---" >> deployment-outputs/clients-deploy.txt
           echo "${{ steps.deploy.outputs.output }}" >> deployment-outputs/clients-deploy.txt
 
 
