@@ -125,6 +125,7 @@ jobs:
           command: up
           refresh: 'false'
           stack-name: clients-dev
+          diff: true
           work-dir: client
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
@@ -139,7 +140,7 @@ jobs:
           echo "Commit: ${{ github.sha }}" >> deployment-outputs/clients-deploy.txt
           echo "Deployed by: ${{ github.actor }}" >> deployment-outputs/clients-deploy.txt
           echo "---" >> preview-outputs/clients-preview.txt
-          echo "${{ steps.deploy.outputs.output }}" >> preview-outputs/clients-deploy.txt
+          echo "${{ steps.deploy.outputs.output }}" >> deployment-outputs/clients-deploy.txt
 
 
       - name: Upload Deployment Artifact
