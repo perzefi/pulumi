@@ -259,7 +259,7 @@ jobs:
 
   platform-refresh-preview:
     runs-on: ubuntu-latest
-#    needs: [clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy]
+    needs: [clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy]
 #    if: always() && !cancelled() && !contains(needs.*.result, 'failure')
     if: |
       always() &&
