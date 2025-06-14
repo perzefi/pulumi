@@ -40,7 +40,7 @@ jobs:
         uses: pulumi/actions@v5
         with:
           command: preview
-          refresh: 'false'
+          refresh: 'true'
           stack-name: clients-dev
           work-dir: client
           diff: true
