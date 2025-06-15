@@ -337,16 +337,8 @@ jobs:
           fi
   platform-deploy:
     runs-on: ubuntu-latest
-    needs: [ clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy, platform-refresh-preview ]
-#    if: always() && !cancelled() && !contains(needs.*.result, 'failure') && needs.platform-refresh-preview.outputs.has_changes == 'true'
-    if: |
-      always() &&
-      needs.platform-refresh-preview.result == 'success' &&
-      needs.platform-refresh-preview.outputs.has_changes == 'true' &&
-      needs.clients-refresh-preview.result != 'failure' &&
-      needs.clients-deploy.result != 'failure' &&
-      needs.foundation-refresh-preview.result != 'failure' &&
-      needs.foundation-deploy.result != 'failure'
+    needs: [ clients-refresh-preview, clients-deploy, foundation-refresh-preview, platform-refresh-preview ]
+    if: always() && !cancelled() && !contains(needs.*.result, 'failure') && needs.platform-refresh-preview.outputs.has_changes == 'true'
     permissions:
       contents: read
       id-token: write
