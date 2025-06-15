@@ -324,18 +324,18 @@ jobs:
         id: check_changes
         run: |
           echo "${{ steps.preview.outputs.output }}" > preview-output.txt
-          
-          # Look for the changes summary line
-          if grep -q "[0-9]+ changes\." preview-output.txt; then
-            CHANGES=$(grep -E "(\+ [0-9]+ to create|\- [0-9]+ to delete|~ [0-9]+ to update|[0-9]+ changes\.)" preview-output.txt | tr '\n' ' ')
+          CHANGES=$(grep -E "to create|to delete|to update|to replace" preview-output.txt || true)
+
+          if [ -n "$CHANGES" ]; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
             echo "changes_summary=$CHANGES" >> "$GITHUB_OUTPUT"
-            echo "::notice title=Pulumi Changes Detected in PLATFORM Stack::$CHANGES"
+            echo "::notice title=Pulumi Change Detected in Client Stack::$CHANGES"
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             echo "changes_summary=No changes detected" >> "$GITHUB_OUTPUT"
-            echo "::notice title=No Pulumi Changes in PLATFORM Stack::No changes detected"
+            echo "::notice title=No Pulumi Changes in Client Stack::No changes detected"
           fi
+
   platform-deploy:
     runs-on: ubuntu-latest
     needs: [clients-refresh-preview, clients-deploy, foundation-refresh-preview, foundation-deploy, platform-refresh-preview]
