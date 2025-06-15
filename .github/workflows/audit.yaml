@@ -287,16 +287,17 @@ jobs:
       - name: Install Pulumi
         uses: pulumi/actions@v5
 
-      - name: Install gcloud
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          install_components: 'gke-gcloud-auth-plugin'
-
       - name: gcloud authentication
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER_DEV }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT_DEV }}
+      - name: Install gcloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          install_components: 'gke-gcloud-auth-plugin'
+
+
 
       - name: NPM install
         env:
